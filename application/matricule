@@ -1,0 +1,108 @@
+package com.example.stage;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
+
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class ThirdActivity extends AppCompatActivity {
+
+    private static final int RETOUR_PRENDRE_PHOTO = 1;
+
+    private Button btnPrendrePhoto;
+    private ImageView imgAffichePhoto;
+    private Button btnEnreg;
+    private String photoPath = null;
+    private Bitmap image;
+    private Button button;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_third);
+        initActivity();
+        button = (Button)findViewById(R.id.btnLoc);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openActivity4();
+            }
+        });
+    }
+    public void openActivity4(){
+        Intent intent = new Intent(this, FourthActivity.class);
+        startActivity(intent);
+    }
+
+    private void initActivity(){
+        btnPrendrePhoto = (Button)findViewById(R.id.btnPrendrePhoto);
+        imgAffichePhoto = (ImageView)findViewById(R.id.imgAffichePhoto);
+        btnEnreg = (Button)findViewById(R.id.btnEnreg);
+        createOnClicBtnPrendrePhoto();
+        creatOnclicBtnEnreg();
+    }
+
+    private void creatOnclicBtnEnreg(){
+        btnEnreg.setOnClickListener(new Button.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                MediaStore.Images.Media.insertImage(getContentResolver(), image, "nom image", "descriptions");
+            }
+        });
+    }
+
+    private void createOnClicBtnPrendrePhoto(){
+        btnPrendrePhoto.setOnClickListener(new Button.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                prendreUnePhoto();
+
+            }
+        });
+    }
+
+    private void prendreUnePhoto(){
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (intent.resolveActivity(getPackageManager())!=null){
+            String time  = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            File photoDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+            try {
+                File photoFile = File.createTempFile("photo"+time,".jpg",photoDir);
+                photoPath = photoFile.getAbsolutePath();
+                Uri photoUri = FileProvider.getUriForFile(ThirdActivity.this,
+                        ThirdActivity.this.getApplicationContext().getPackageName()+".provider",
+                        photoFile);
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+                startActivityForResult(intent, RETOUR_PRENDRE_PHOTO);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode==RETOUR_PRENDRE_PHOTO && resultCode==RESULT_OK){
+            Bitmap image = BitmapFactory.decodeFile(photoPath);
+            imgAffichePhoto.setImageBitmap(image);
+        }
+    }
+}
+
+
